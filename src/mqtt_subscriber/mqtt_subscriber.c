@@ -3,15 +3,63 @@
 #include <string.h>
 #include <unistd.h>
 #include "MQTTClient.h"
+#include <cjson/cJSON.h>
 
 #include "config.h"
+#include "mqtt_data/mqtt_queue.h"
+#include "mqtt_data/mqtt_event.h"
 
 volatile int keepRunning = 1;
+
+float handle_json(cJSON *json, const char *key)
+{
+    cJSON *temp_item = cJSON_GetObjectItem(json, key);
+    if (cJSON_IsNumber(temp_item))
+    {
+        float data = (float)temp_item->valuedouble;
+        printf("Added temperature: %.2f\n", data);
+        return data;
+    }
+};
+
+void on_temperature_received(float temperature)
+{
+    mqtt_event_t event = {
+        .type = EVENT_TEMPERATURE,
+        .value = temperature};
+
+    queue_push(event);
+}
+
+void handle_message(char *topic_name, MQTTClient_message *message)
+{
+    cJSON *json = cJSON_ParseWithLength(message->payload, message->payloadlen);
+    if (json)
+    {
+
+        if (strcmp(topic_name, "sensor/temperature") == 0)
+        {
+            on_temperature_received(handle_json(json, "temperature"));
+        }
+        else
+        {
+            printf("Received message: %s\n", message);
+        }
+
+        cJSON_Delete(json);
+    }
+    else
+    {
+        printf("Failed to parse JSON\n");
+    }
+}
 
 int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message)
 {
     printf("TAG: %s\n", topicName);
     printf("Message: %.*s\n", message->payloadlen, (char *)message->payload);
+
+    handle_message(topicName, (char *)message->payload);
 
     MQTTClient_freeMessage(&message);
     MQTTClient_free(topicName);
@@ -56,4 +104,6 @@ int mqtt_init()
 
     MQTTClient_disconnect(client, 10000);
     MQTTClient_destroy(&client);
+
+    return 0;
 };
