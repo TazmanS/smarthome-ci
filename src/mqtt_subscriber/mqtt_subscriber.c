@@ -6,8 +6,8 @@
 #include <cjson/cJSON.h>
 
 #include "config.h"
-#include "mqtt_data/mqtt_queue.h"
-#include "mqtt_data/mqtt_event.h"
+#include "mqtt_queue/mqtt_queue.h"
+#include "mqtt_event.h"
 
 volatile int keepRunning = 1;
 

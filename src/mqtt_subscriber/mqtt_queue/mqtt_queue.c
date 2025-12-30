@@ -11,10 +11,6 @@ static int count = 0;
 static pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t queue_cond = PTHREAD_COND_INITIALIZER;
 
-void queue_init(void)
-{
-}
-
 void queue_push(mqtt_event_t event)
 {
     pthread_mutex_lock(&queue_mutex);

@@ -2,8 +2,7 @@
 
 typedef enum
 {
-    EVENT_TEMPERATURE,
-    EVENT_LIGHT
+    EVENT_TEMPERATURE
 } event_type_t;
 
 typedef struct
