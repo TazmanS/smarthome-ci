@@ -5,13 +5,18 @@
 #include "MQTTClient.h"
 #include <cjson/cJSON.h>
 
-#include "config.h"
+#include "../helpers/config/config.h"
 #include "mqtt_queue/mqtt_queue.h"
 #include "mqtt_event.h"
 
 volatile int keepRunning = 1;
 
-float handle_json(cJSON *json, const char *key)
+static float handle_json(cJSON *json, const char *key);
+static void on_temperature_received(float temperature);
+static void handle_message(char *topic_name, char *message);
+static int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message);
+
+static float handle_json(cJSON *json, const char *key)
 {
     cJSON *temp_item = cJSON_GetObjectItem(json, key);
     if (cJSON_IsNumber(temp_item))
@@ -20,9 +25,9 @@ float handle_json(cJSON *json, const char *key)
         printf("Added temperature: %.2f\n", data);
         return data;
     }
-};
+}
 
-void on_temperature_received(float temperature)
+static void on_temperature_received(float temperature)
 {
     mqtt_event_t event = {
         .type = EVENT_TEMPERATURE,
@@ -31,9 +36,9 @@ void on_temperature_received(float temperature)
     queue_push(event);
 }
 
-void handle_message(char *topic_name, MQTTClient_message *message)
+static void handle_message(char *topic_name, char *message)
 {
-    cJSON *json = cJSON_ParseWithLength(message->payload, message->payloadlen);
+    cJSON *json = cJSON_ParseWithLength(message, strlen(message));
     if (json)
     {
 
@@ -54,7 +59,7 @@ void handle_message(char *topic_name, MQTTClient_message *message)
     }
 }
 
-int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message)
+static int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message)
 {
     printf("TAG: %s\n", topicName);
     printf("Message: %.*s\n", message->payloadlen, (char *)message->payload);
@@ -106,4 +111,4 @@ int mqtt_init()
     MQTTClient_destroy(&client);
 
     return 0;
-};
+}

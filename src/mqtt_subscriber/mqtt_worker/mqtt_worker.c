@@ -3,7 +3,7 @@
 #include "mqtt_worker.h"
 #include "../mqtt_stores/mqtt_temperature_store/mqtt_temperature_store.h"
 
-void *worker_thread(void *arg)
+void *worker_thread()
 {
     while (1)
     {

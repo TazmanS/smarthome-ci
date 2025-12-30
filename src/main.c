@@ -1,8 +1,8 @@
-#include "mqtt_subscriber.h"
 #include <pthread.h>
-#include "mqtt_worker/mqtt_worker.h"
+#include "mqtt_subscriber/mqtt_subscriber.h"
+#include "mqtt_subscriber/mqtt_worker/mqtt_worker.h"
 
-void *mqtt_thread(void *arg)
+void *mqtt_thread()
 {
     mqtt_init();
 

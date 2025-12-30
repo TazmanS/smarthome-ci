@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <string.h>
 
 static float values[10];
 static int count = 0;
