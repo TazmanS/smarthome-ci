@@ -1,3 +1,3 @@
 #pragma once
 
-void *worker_thread(void *);
+void *mqtt_worker_thread();

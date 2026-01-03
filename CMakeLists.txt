@@ -37,9 +37,13 @@ target_compile_options(${PROJECT_NAME}
 )
 
 # -------------------------
-# cJSON (libcjson)
+# Dependencies via pkg-config
 # -------------------------
 find_package(PkgConfig REQUIRED)
+
+# -------------------------
+# cJSON
+# -------------------------
 pkg_check_modules(CJSON REQUIRED libcjson)
 
 target_include_directories(${PROJECT_NAME}
@@ -53,14 +57,42 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # -------------------------
-# Paho MQTT 
+# PostgreSQL (libpq)
 # -------------------------
-# include � library 
-target_include_directories(${PROJECT_NAME} PRIVATE /usr/include)
-target_link_libraries(${PROJECT_NAME} PRIVATE paho-mqtt3c)
+pkg_check_modules(LIBPQ REQUIRED libpq)
+
+target_include_directories(${PROJECT_NAME}
+    PRIVATE
+        ${LIBPQ_INCLUDE_DIRS}
+)
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        ${LIBPQ_LIBRARIES}
+)
 
 # -------------------------
-# Optional: debug flags
+# Paho MQTT
+# -------------------------
+find_library(PAHO_MQTT_LIB paho-mqtt3c REQUIRED)
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        ${PAHO_MQTT_LIB}
+)
+
+# -------------------------
+# Threads (pthread)
+# -------------------------
+find_package(Threads REQUIRED)
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+        Threads::Threads
+)
+
+# -------------------------
+# Debug flags
 # -------------------------
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(${PROJECT_NAME}
