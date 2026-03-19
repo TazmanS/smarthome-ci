@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include "MQTTClient.h"
@@ -11,20 +12,23 @@
 
 volatile int keepRunning = 1;
 
-static float handle_json(cJSON *json, const char *key);
+static bool handle_json(cJSON *json, const char *key, float *value);
 static void on_temperature_received(float temperature);
-static void handle_message(char *topic_name, char *message);
+static void handle_message(const char *topic_name, const char *message, size_t message_len);
 static int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message);
 
-static float handle_json(cJSON *json, const char *key)
+static bool handle_json(cJSON *json, const char *key, float *value)
 {
     cJSON *temp_item = cJSON_GetObjectItem(json, key);
     if (cJSON_IsNumber(temp_item))
     {
-        float data = (float)temp_item->valuedouble;
-        printf("Added temperature: %.2f\n", data);
-        return data;
+        *value = (float)temp_item->valuedouble;
+        printf("Added temperature: %.2f\n", *value);
+        return true;
     }
+
+    fprintf(stderr, "Invalid or missing numeric field: %s\n", key);
+    return false;
 }
 
 static void on_temperature_received(float temperature)
@@ -36,19 +40,23 @@ static void on_temperature_received(float temperature)
     queue_push(event);
 }
 
-static void handle_message(char *topic_name, char *message)
+static void handle_message(const char *topic_name, const char *message, size_t message_len)
 {
-    cJSON *json = cJSON_ParseWithLength(message, strlen(message));
+    cJSON *json = cJSON_ParseWithLength(message, message_len);
     if (json)
     {
-
         if (strcmp(topic_name, "sensor/temperature") == 0)
         {
-            on_temperature_received(handle_json(json, "temperature"));
+            float temperature;
+
+            if (handle_json(json, "temperature", &temperature))
+            {
+                on_temperature_received(temperature);
+            }
         }
         else
         {
-            printf("Received message: %s\n", message);
+            printf("Received message: %.*s\n", (int)message_len, message);
         }
 
         cJSON_Delete(json);
@@ -61,10 +69,13 @@ static void handle_message(char *topic_name, char *message)
 
 static int messageArrived(void *context, char *topicName, int topicLen, MQTTClient_message *message)
 {
+    (void)context;
+    (void)topicLen;
+
     printf("TAG: %s\n", topicName);
     printf("Message: %.*s\n", message->payloadlen, (char *)message->payload);
 
-    handle_message(topicName, (char *)message->payload);
+    handle_message(topicName, (const char *)message->payload, (size_t)message->payloadlen);
 
     MQTTClient_freeMessage(&message);
     MQTTClient_free(topicName);

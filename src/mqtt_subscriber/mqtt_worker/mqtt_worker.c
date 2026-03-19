@@ -3,8 +3,10 @@
 #include "mqtt_worker.h"
 #include "../mqtt_stores/mqtt_temperature_store/mqtt_temperature_store.h"
 
-void *mqtt_worker_thread()
+void *mqtt_worker_thread(void *arg)
 {
+    (void)arg;
+
     while (1)
     {
         mqtt_event_t event = queue_pop();

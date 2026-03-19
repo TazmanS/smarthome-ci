@@ -4,9 +4,12 @@
 #include "data_base/data_base.h"
 
 #include <libpq-fe.h>
+#include <stdio.h>
 
-void *mqtt_thread()
+static void *mqtt_thread(void *arg)
 {
+    (void)arg;
+
     mqtt_init();
 
     return NULL;
@@ -15,6 +18,12 @@ void *mqtt_thread()
 int main(void)
 {
     PGconn *conn = data_base_init();
+
+    if (conn == NULL)
+    {
+        fprintf(stderr, "Failed to initialize database connection\n");
+        return 1;
+    }
 
     pthread_t mqtt_thread_id;
     pthread_t mqtt_worker_thread_id;
